@@ -1,0 +1,97 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index cfa5d79f668a5b6a3a7b20b65b9dfbe19aa59097..31da3d93111f4890d1c847ac109fcc42b87b6812 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1078,6 +1078,69 @@ namespace MebCbsAnka.Controllers
+             }
+         }
+ 
++        [HttpGet("GetSetMaksIlceyeBagliBucakKoyMahalleListele")]
++        public async Task<MaksGeriDonusDegerleri> GetSetMaksIlceyeBagliBucakKoyMahalleListele(int ilceKodu, MaksGeriDonusDegerleri maksResult)
++        {
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksIlceyeBagliBucakKoyVeBagliSorguKriter();
++            kriter.IlceKodu = ilceKodu;
++
++            var client = new ServiceMernis.AksIlceyeBagliBucakKoyVeBagliServisClient();
++            ServiceMernis.IlceyeBagliBucakKoyVeBagliBilgisiSonucu response = await client.IlceyeBagliBucakKoyVeBaglilariListeleAsync(kriter, giris, logClient);
++
++            if (response != null)
++            {
++                ServiceMernis.IlceyeBagliBucakKoyVeBagliBilgisi[] koySorguSonucu = response.SorguSonucu;
++                if (response.SorguSonucu.Length != 0)
++                {
++                    ServiceMernis.BagliBucakBilgisi[] bagliBucakListesi = koySorguSonucu[0].BagliBucakListesi;
++                    if (bagliBucakListesi.Length != 0)
++                    {
++                        for (var i = 0; i < bagliBucakListesi.Length; i++)
++                        {
++                            maksResult.bucaklar = bagliBucakListesi;
++                            ServiceMernis.BagliKoyBilgisi[] bagliKoyListesi = bagliBucakListesi[i].BagliKoyListesi;
++                            if (bagliKoyListesi.Length != 0)
++                            {
++                                maksResult.bucaklar[i].BagliKoyListesi = bagliKoyListesi;
++                                for (var j = 0; j < bagliKoyListesi.Length; j++)
++                                {
++                                    ServiceMernis.BagliMahalleBilgisi[] bagliMahalleListesi = bagliKoyListesi[j].BagliMahalleListesi;
++                                    string koyAdi = bagliKoyListesi[j].KoyAdi;
++                                    if (koyAdi != null)
++                                    {
++                                        maksResult.bucaklar[i].BagliKoyListesi[j].BagliMahalleListesi = bagliMahalleListesi;
++
++                                    }
++                                }
++
++                            }
++                        }
++                    }
++                }
++            }
++            else
++            {
++                maksResult.error.code = 2;
++                maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " IlceyeBagliBucakKoyVeBaglilariListeleAsync Sonuç Vermedi.";
++            }
++
++            return maksResult;
++        }
++
+         [HttpGet("GetMaksIlceyeBagliMahalleListele")]
+         public async Task<MaksGeriDonusDegerleri> GetMaksIlceyeBagliMahalleListele(int ilceKodu)
+         {
+@@ -1110,6 +1173,9 @@ namespace MebCbsAnka.Controllers
+                 if (sorguSonucu != null)
+                 {
+                     maksResult.mahalleler = sorguSonucu;
++
++                    maksResult = await GetSetMaksIlceyeBagliBucakKoyMahalleListele(ilceKodu, maksResult);
++
+                 }
+                 else
+                 {
+diff --git a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+index a3be1952aec682ef69482a9d466dfddae2fb2fe5..6c325ca46f6087b76e1c2ab8be6edf7fcac93c97 100644
+--- a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
++++ b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+@@ -11,7 +11,7 @@ namespace MebCbsAnka.Dtos
+         public ServiceMernis.Mahalle[] mahalleler { get; set; }
+         public ServiceMernis.Csbm[] csbmler { get; set; }
+         public ServiceMernis.Bina[] binalar { get; set; }
+-        //public ServiceMernis.BagimsizBolum[] bagimsizBolumler { get; set; }
++        public ServiceMernis.BagliBucakBilgisi[] bucaklar { get; set; }
+         public maksGeometry geometry { get; set; }
+         public ErrorDescription error { get; set; }
+ 
