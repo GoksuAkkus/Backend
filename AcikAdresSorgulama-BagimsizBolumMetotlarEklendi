@@ -1,0 +1,254 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index 31da3d93111f4890d1c847ac109fcc42b87b6812..de8715fb275dbd8210994166610fb4ed401d8c5f 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1029,6 +1029,221 @@ namespace MebCbsAnka.Controllers
+ 
+         }
+ 
++
++        [HttpGet("GetBinaNoFromBinaKodu")]
++        public async Task<string> GetBinaNoFromBinaKodu(int binaKodu)
++        {
++            // yapiKimlikNo = binaNo
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuMahalleSorguKriter();
++            kriter.Kod = binaKodu;
++
++            var client = new ServiceMernis.AksOkuBinaServisClient();
++            var response = await client.BinaBilgiGetirAsync(kriter, giris, logClient);
++
++            if (response != null)
++            {
++                var binaNo = response.SorguSonucu[0].BinaNo.ToString();
++                return binaNo;
++            }
++            else
++            {
++                return "";
++            }
++        }
++
++        // BİNAKODUNDAN SORGULAMADA 2. ADIM OLARAK KULLANILACAK
++        [HttpGet("GetAdresNoFromKimlikNo")]
++        public async Task<MaksGeriDonusDegerleri> GetAdresNoFromKimlikNo(string yapiKimlikNo)
++        {
++            // yapiKimlikNo = binaNo
++            MaksGeriDonusDegerleri maksResult = new MaksGeriDonusDegerleri();
++            List<MaksGeriDonusDegerleri.BagimsizBolumBina> binaArray = new List<MaksGeriDonusDegerleri.BagimsizBolumBina>();
++            MaksGeriDonusDegerleri.ErrorDescription errorDesc = new MaksGeriDonusDegerleri.ErrorDescription();
++            maksResult.error = errorDesc;
++
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            int parsedyapiKimlikNo = 0;
++            var parseState = int.TryParse(yapiKimlikNo, out parsedyapiKimlikNo);
++
++            if (parseState)
++            {
++                var binaNoKriter = new ServiceMernis.AksOkuBagimsizBolumBinaNoSorguKriter();
++
++                binaNoKriter.BinaNo = parsedyapiKimlikNo;
++
++                var binaNoServisClient = new ServiceMernis.AksOkuBagimsizBolumBinaNoServisClient();
++
++                var response = await binaNoServisClient.BinaNodanBagimsizBolumListeleAsync(binaNoKriter, giris, logClient);
++
++                if (response.SorguSonucu.Length > 0)
++                {
++                    for (var i = 0; i < response.SorguSonucu.Length; i++)
++                    {
++                        var bina = response.SorguSonucu[i];
++                        var bagimsizBolumBina = new MaksGeriDonusDegerleri.BagimsizBolumBina();
++                        var hataBilgisi = response.SorguSonucu[i].HataBilgisi;
++
++                        if (hataBilgisi == null)
++                        {
++                            long? adresNo = bina.AdresNo != null ? bina.AdresNo: 0;
++                            long? binaKodu = bina.BinaKodu != null ? bina.BinaKodu : 0;
++                            int? binaNo = bina.BinaNo != null ? bina.BinaNo : 0;
++                            string icKapiNo = bina.IcKapiNo != null ? bina.IcKapiNo : "";
++
++                            bagimsizBolumBina.adresNo = adresNo;
++                            bagimsizBolumBina.binaKodu = binaKodu;
++                            bagimsizBolumBina.binaNo = binaNo;
++                            bagimsizBolumBina.icKapiNo = icKapiNo;
++                            bagimsizBolumBina.hataBilgisi = "";
++                            binaArray.Add(bagimsizBolumBina);
++
++                        }
++                        else
++                        {
++                            bagimsizBolumBina.hataBilgisi = hataBilgisi.Aciklama;
++                        }
++                    }
++                    maksResult.acikAdresWithBinaKoduArray = binaArray;
++                    return maksResult;
++                }
++                else
++                {
++                    maksResult.error.code = 2;
++                    maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " Sorgu Sonucu Boş Geldi. ";
++                    return maksResult;
++                }
++            }
++            else
++            {
++                maksResult.error.code = -1;
++                maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " Bina Kodu: " + yapiKimlikNo + " Parse Edilemedi. ";
++                return maksResult;
++            }
++        }
++
++        [HttpGet("GetMaksAcikAdresWithAdresNo")]
++        public async Task<MaksGeriDonusDegerleri> GetMaksAcikAdresWithAdresNo(string adresNo)
++        {
++            MaksGeriDonusDegerleri maksResult = new MaksGeriDonusDegerleri();
++            MaksGeriDonusDegerleri.ErrorDescription errorDesc = new MaksGeriDonusDegerleri.ErrorDescription();
++            maksResult.error = errorDesc;
++
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            long parsedAdresNo = 0;
++            var parseState = long.TryParse(adresNo, out parsedAdresNo);
++
++            if (parseState)
++            {
++                var kriter = new ServiceMernis.AcikAdresSorguKriter();
++                kriter.AdresNo = parsedAdresNo;
++
++                var client = new ServiceMernis.AksAcikAdresServisClient();
++                ServiceMernis.AcikAdresSonucu response = await client.AcikAdresBilgiGetirAsync(kriter, giris, logClient);
++
++                if (response != null)
++                {
++                    ServiceMernis.AcikAdres[] sorguSonucu = response.SorguSonucu;
++                    if (sorguSonucu != null)
++                    {
++                        if (sorguSonucu.Length > 0)
++                        {
++                            var acikAdres = sorguSonucu[0].Aciklama;
++                            if (acikAdres != null)
++                            {
++                                maksResult.acikAdresWithAdresNo = acikAdres;
++                                return maksResult;
++                            }
++                            else
++                            {
++                                var hataBilgisi = sorguSonucu[0].HataBilgisi;
++                                if (hataBilgisi != null)
++                                {
++                                    if (hataBilgisi.Aciklama != null)
++                                    {
++                                        maksResult.error.code = 1;
++                                        maksResult.error.description = "HATA CODE: #" + maksResult.error.code + "Aciklama (Açık Adres) Null Geldi.";
++                                        maksResult.error.maksDescription = hataBilgisi.Aciklama;
++                                    }
++
++                                }
++                                else
++                                {
++                                    maksResult.error.code = 1;
++                                    maksResult.error.description = "HATA CODE: #" + maksResult.error.code + "Aciklama (Açık Adres) Null Geldi.";
++                                }
++                            }
++                        }
++                        else
++                        {
++                            maksResult.error.code = 2;
++                            maksResult.error.description = "HATA CODE: #" + maksResult.error.code + "Sorgu Sonucu Boş Geldi";
++                        }
++                    }
++                    else
++                    {
++                        maksResult.error.code = 3;
++                        maksResult.error.description = "HATA CODE: #" + maksResult.error.code + "Sorgu Sonucu Null Geldi.";
++                    }
++
++
++                    return maksResult;
++                }
++                else
++                {
++                    maksResult.error.code = 0;
++                    maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " AcikAdresBilgiGetirAsync Sonuç Vermedi.";
++                    return maksResult;
++                }
++            }
++            else
++            {
++
++                maksResult.error.code = -1;
++                maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " Adres No: " + adresNo + " Parse Edilemedi. ";
++                return maksResult;
++            }
++        }
++
+         [HttpGet("GetMaksIleBagliIlceListele")]
+         public async Task<MaksGeriDonusDegerleri> GetMaksIleBagliIlceListele(int ilKodu)
+         {
+diff --git a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+index 6c325ca46f6087b76e1c2ab8be6edf7fcac93c97..5cd5d5be074bac239957d0ec6a6690c079fedb5f 100644
+--- a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
++++ b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+@@ -14,11 +14,23 @@ namespace MebCbsAnka.Dtos
+         public ServiceMernis.BagliBucakBilgisi[] bucaklar { get; set; }
+         public maksGeometry geometry { get; set; }
+         public ErrorDescription error { get; set; }
++        public string acikAdresWithAdresNo { get; set; }
++        public List<BagimsizBolumBina> acikAdresWithBinaKoduArray { get; set; }
++
++        public class BagimsizBolumBina
++        {
++            public long? adresNo{ get; set; }
++            public long? binaKodu{ get; set; }
++            public int? binaNo { get; set; }
++            public string icKapiNo { get; set; }
++            public string hataBilgisi { get; set; }
++        }
+ 
+         public class ErrorDescription
+         {
+             public int code { get; set; }
+             public string description { get; set; }
++            public string maksDescription { get; set; }
+         }
+ 
+         public class maksGeometry
