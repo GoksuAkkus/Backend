@@ -1,0 +1,214 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index 77c5bfa6def64a10d3e1cb0e869a6d17ef24f18f..6f4f8c99262a6776905cc341f7525e0a3b62cff6 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -123,7 +123,7 @@ namespace MebCbsAnka.Controllers
+             }
+ 
+             var user = await _authRepository.Login(userForLoginDto.UserName, userForLoginDto.Password);
+-            
++
+             if (user == null)
+             {
+                 _authRepository.UpdateUserLoginTryCount(userForLoginDto.UserName);
+@@ -1181,6 +1181,156 @@ namespace MebCbsAnka.Controllers
+             }
+         }
+ 
++        public async Task<XmlDocument> GetMaksYapiBinaGeometryWithPointReq(string lat, string lon)
++        {
++            var url = "http://mernis.meb.gov.tr/WFSService/wfs.asmx/Get?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=maks:Yapi&username=mebcbs&password=9UFdAy7x&FILTER=%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%20xmlns:gml=%22http://www.opengis.net/gml%22%3E%3CIntersects%3E%3CPropertyName%3Egeometri%3C/PropertyName%3E%3Cgml:Point%3E%3Cgml:coordinates%3E" + lat + "%20" + lon + "%3C/gml:coordinates%3E%3C/gml:Point%3E%3C/Intersects%3E%3C/Filter%3E";
++
++            var httpClient = new HttpClient();
++
++            var response = await httpClient.GetAsync(url);
++
++            var content = await response.Content.ReadAsStringAsync();
++
++            XmlDocument doc = new XmlDocument();
++
++            doc.LoadXml(content);
++
++            return doc;
++        }
++
++        public async Task<XmlDocument> GetMaksDigerYapiBinaGeometryWithPointReq(string lat, string lon)
++        {
++            var url = "http://mernis.meb.gov.tr/WFSService/wfs.asmx/Get?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=maks:DigerYapi&username=mebcbs&password=9UFdAy7x&FILTER=%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%20xmlns:gml=%22http://www.opengis.net/gml%22%3E%3CIntersects%3E%3CPropertyName%3Egeometri%3C/PropertyName%3E%3Cgml:Point%3E%3Cgml:coordinates%3E" + lat + "%20" + lon + "%3C/gml:coordinates%3E%3C/gml:Point%3E%3C/Intersects%3E%3C/Filter%3E";
++
++            var httpClient = new HttpClient();
++
++            var response = await httpClient.GetAsync(url);
++
++            var content = await response.Content.ReadAsStringAsync();
++
++            XmlDocument doc = new XmlDocument();
++
++            doc.LoadXml(content);
++
++            return doc;
++        }
++
++        public async Task<XmlDocument> GetMaksAllNumaratajReq(string geom)
++        {
++            var url = "http://mernis.meb.gov.tr/WFSService/wfs.asmx/Get?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=maks:Numarataj&username=mebcbs&password=9UFdAy7x&FILTER=%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%20xmlns:gml=%22http://www.opengis.net/gml%22%3E%3CIntersects%3E%3CPropertyName%3Egeometri%3C/PropertyName%3E%3Cgml:Polygon%20xmlns:gml=%22http://www.opengis.net/gml%22%20srsName=%22EPSG:4326%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E" + geom + "%3C/gml:posList%3E%3C/gml:LinearRing%3E%3C/gml:exterior%3E%3C/gml:Polygon%3E%3C/Intersects%3E%3C/Filter%3E";
++
++            var httpClient = new HttpClient();
++
++            var response = await httpClient.GetAsync(url);
++
++            var content = await response.Content.ReadAsStringAsync();
++
++            XmlDocument doc = new XmlDocument();
++
++            doc.LoadXml(content);
++
++            return doc;
++        }
++
++        [HttpGet("getAllNumaratajFromBina")]
++        public async Task<List<MaksBinaKodu>> getAllNumaratajFromBina(string lat, string lon)
++        {
++            List<List<double[]>> geomForNoComma = null;
++            List<MaksBinaKodu> binaList = new List<MaksBinaKodu>();
++
++            var yapiResponse = await GetMaksYapiBinaGeometryWithPointReq(lat, lon);
++
++            if (yapiResponse.LastChild.ChildNodes.Count == 0)
++            {
++                Console.WriteLine("Maks:Yapi Response Null");
++
++                yapiResponse = await GetMaksDigerYapiBinaGeometryWithPointReq(lat, lon);
++
++                if (yapiResponse.LastChild.ChildNodes.Count == 0)
++                {
++                    Console.WriteLine("Maks:DigerYapi Response Null");
++                    return null;
++                }
++            }
++
++            var featureAttributes = yapiResponse.LastChild.ChildNodes[0].FirstChild;
++            var maksGeom = featureAttributes["maks:geometri"] != null ? featureAttributes["maks:geometri"].InnerText : "";
++            // geomForNoComma = createRingsForNoComma(maksGeom);
++
++            var numaratajResponse = await GetMaksAllNumaratajReq(maksGeom);
++            // return geomForNoComma;
++
++            var features = numaratajResponse.LastChild.ChildNodes;
++
++            for (int i = 0; i < features.Count; i++)
++            {
++                MaksBinaKodu bina = new MaksBinaKodu();
++                var attributes = features[i].FirstChild;
++
++                var numaratajNo = int.Parse(attributes["maks:kimlikNo"].InnerText);
++                var disKapiNo = attributes["maks:kapiNo"].InnerText;
++                bina.kimlikNo = numaratajNo;
++                bina.kapiNo = disKapiNo;
++
++                binaList.Add(bina);
++
++            }
++
++             binaList = await setBinaCodesFromNumarataj(binaList);
++
++            return binaList;
++        }
++
++        [HttpGet("GetMernisBinaKoduFromKimlikNo")]
++        public async Task<string> GetMernisBinaKoduFromKimlikNo(int kimlikNo)
++        {
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var binaNoKriter = new ServiceMernis.AksOkuBagimsizBolumBinaNoSorguKriter();
++
++            binaNoKriter.BinaNo = kimlikNo;
++
++            var binaNoServisClient = new ServiceMernis.AksOkuBagimsizBolumBinaNoServisClient();
++
++            var response = await binaNoServisClient.BinaNodanBagimsizBolumListeleAsync(binaNoKriter, giris, logClient);
++            if (response != null)
++            {
++                var binaKodu = response.SorguSonucu[0].BinaKodu.ToString();
++                return binaKodu;
++            }
++            else
++            {
++                return "";
++            }
++
++        }
++
++        public async Task<List<MaksBinaKodu>> setBinaCodesFromNumarataj(List<MaksBinaKodu> binaList)
++        {
++
++            for (int i = 0; i < binaList.Count; i++)
++            {
++                string binaKodu = await GetMernisBinaKoduFromKimlikNo(binaList[i].kimlikNo);
++                if(binaKodu != null)
++                {
++                    binaList[i].binaKodu = binaKodu;
++                }
++            }
++            return binaList;
++        }
++
+         public async Task<XmlDocument> GetMaksNumaratajGeometryReq(int kimlikNo)
+         {
+             var url = "http://mernis.meb.gov.tr/WFSService/wfs.asmx/Get?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=maks:Numarataj&username=mebcbs&password=9UFdAy7x&FILTER=%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%20xmlns:gml=%22http://www.opengis.net/gml%22%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3EkimlikNo%3C/PropertyName%3E%3CLiteral%3E" + kimlikNo + "%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E";
+@@ -1791,6 +1941,7 @@ namespace MebCbsAnka.Controllers
+         //[Authorize(Roles = "SuperAdmin, Admin, User")]
+         public async Task<IActionResult> maksProxy()
+         {
++
+             var mernisData = "http://mernis.meb.gov.tr/WMSService/get.aspx?username=mebcbs&password=9UFdAy7x&";
+             var query = HttpContext.Request.Query;
+             var urlData = "";
+diff --git a/MebCbsAnka/Dtos/MaksBinaKodu.cs b/MebCbsAnka/Dtos/MaksBinaKodu.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..a27a848b7c36ec4f31f2a71feb04675d48ead1a2
+--- /dev/null
++++ b/MebCbsAnka/Dtos/MaksBinaKodu.cs
+@@ -0,0 +1,14 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Threading.Tasks;
++
++namespace MebCbsAnka.Dtos
++{
++    public class MaksBinaKodu
++    {
++        public int kimlikNo { get; set; }
++        public string kapiNo { get; set; }
++        public string binaKodu { get; set; }
++    }
++}
+diff --git a/MebCbsAnka/Properties/PublishProfiles/CustomProfile.pubxml b/MebCbsAnka/Properties/PublishProfiles/CustomProfile.pubxml
+index 9bac2049a17eccce9899b5652344f758ae3ab1e1..acd12f69a39ea803fabedb9e92020d610a2eb737 100644
+--- a/MebCbsAnka/Properties/PublishProfiles/CustomProfile.pubxml
++++ b/MebCbsAnka/Properties/PublishProfiles/CustomProfile.pubxml
+@@ -14,8 +14,8 @@ by editing this MSBuild file. In order to learn more about this please visit htt
+     <TargetFramework>netcoreapp2.1</TargetFramework>
+     <ProjectGuid>dd829f7b-846f-4433-b8a1-55ddced28e59</ProjectGuid>
+     <SelfContained>false</SelfContained>
+-    <_IsPortable>false</_IsPortable>
+-    <publishUrl>C:\Users\Administrator\Documents\Project Repo\meb-ws</publishUrl>
++    <_IsPortable>true</_IsPortable>
++    <publishUrl>C:\Users\Tarik ALYAKUT\Desktop\meb-ws</publishUrl>
+     <DeleteExistingFiles>True</DeleteExistingFiles>
+   </PropertyGroup>
+ </Project>
+\ No newline at end of file
