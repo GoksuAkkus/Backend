@@ -1,0 +1,83 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index 6f4f8c99262a6776905cc341f7525e0a3b62cff6..43fee0355bc8bb549c3eb1edc004d3eb3118effb 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1217,7 +1217,8 @@ namespace MebCbsAnka.Controllers
+ 
+         public async Task<XmlDocument> GetMaksAllNumaratajReq(string geom)
+         {
+-            var url = "http://mernis.meb.gov.tr/WFSService/wfs.asmx/Get?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=maks:Numarataj&username=mebcbs&password=9UFdAy7x&FILTER=%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%20xmlns:gml=%22http://www.opengis.net/gml%22%3E%3CIntersects%3E%3CPropertyName%3Egeometri%3C/PropertyName%3E%3Cgml:Polygon%20xmlns:gml=%22http://www.opengis.net/gml%22%20srsName=%22EPSG:4326%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E" + geom + "%3C/gml:posList%3E%3C/gml:LinearRing%3E%3C/gml:exterior%3E%3C/gml:Polygon%3E%3C/Intersects%3E%3C/Filter%3E";
++            var url = "http://mernis.meb.gov.tr/WFSServiceV3/wfs.asmx/Get?username=mebcbs&password=9UFdAy7x&TYPENAME=Numarataj&FILTER=" + geom;
++            // var url = "http://mernis.meb.gov.tr/WFSService/wfs.asmx/Get?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=maks:Numarataj&username=mebcbs&password=9UFdAy7x&FILTER=%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%20xmlns:gml=%22http://www.opengis.net/gml%22%3E%3CIntersects%3E%3CPropertyName%3Egeometri%3C/PropertyName%3E%3Cgml:Polygon%20xmlns:gml=%22http://www.opengis.net/gml%22%20srsName=%22EPSG:4326%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E" + geom + "%3C/gml:posList%3E%3C/gml:LinearRing%3E%3C/gml:exterior%3E%3C/gml:Polygon%3E%3C/Intersects%3E%3C/Filter%3E";
+ 
+             var httpClient = new HttpClient();
+ 
+@@ -1232,11 +1233,11 @@ namespace MebCbsAnka.Controllers
+             return doc;
+         }
+ 
+-        [HttpGet("getAllNumaratajFromBina")]
+-        public async Task<List<MaksBinaKodu>> getAllNumaratajFromBina(string lat, string lon)
++
++        [HttpGet("getGeometryFromMaks")]
++        public async Task<List<List<double[]>>> getGeometryFromMaks(string lat, string lon)
+         {
+             List<List<double[]>> geomForNoComma = null;
+-            List<MaksBinaKodu> binaList = new List<MaksBinaKodu>();
+ 
+             var yapiResponse = await GetMaksYapiBinaGeometryWithPointReq(lat, lon);
+ 
+@@ -1255,10 +1256,18 @@ namespace MebCbsAnka.Controllers
+ 
+             var featureAttributes = yapiResponse.LastChild.ChildNodes[0].FirstChild;
+             var maksGeom = featureAttributes["maks:geometri"] != null ? featureAttributes["maks:geometri"].InnerText : "";
+-            // geomForNoComma = createRingsForNoComma(maksGeom);
++            geomForNoComma = createRingsForNoComma(maksGeom);
+ 
+-            var numaratajResponse = await GetMaksAllNumaratajReq(maksGeom);
+-            // return geomForNoComma;
++            return geomForNoComma;
++        }
++
++        [HttpPost("getAllNumaratajFromBina")]
++        public async Task<List<MaksBinaKodu>> getAllNumaratajFromBina([FromBody] MaksPostBody bufferGeometry)
++        {
++            List<MaksBinaKodu> binaList = new List<MaksBinaKodu>();
++
++            //TODO: herşey frontend tarafında ayarlanacak buraya istenilen formatta string halinde geometri gelecek x y, y z, c v ... şeklinde
++            var numaratajResponse = await GetMaksAllNumaratajReq(bufferGeometry.bufferGeom);
+ 
+             var features = numaratajResponse.LastChild.ChildNodes;
+ 
+@@ -1276,11 +1285,12 @@ namespace MebCbsAnka.Controllers
+ 
+             }
+ 
+-             binaList = await setBinaCodesFromNumarataj(binaList);
++            binaList = await setBinaCodesFromNumarataj(binaList);
+ 
+             return binaList;
+         }
+ 
++
+         [HttpGet("GetMernisBinaKoduFromKimlikNo")]
+         public async Task<string> GetMernisBinaKoduFromKimlikNo(int kimlikNo)
+         {
+diff --git a/MebCbsAnka/Dtos/MaksPostBody.cs b/MebCbsAnka/Dtos/MaksPostBody.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..6b87040bca66c98b76875f6718390cc829601707
+--- /dev/null
++++ b/MebCbsAnka/Dtos/MaksPostBody.cs
+@@ -0,0 +1,12 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Threading.Tasks;
++
++namespace MebCbsAnka.Dtos
++{
++    public class MaksPostBody
++    {
++       public string bufferGeom { get; set; }
++    }
++}
