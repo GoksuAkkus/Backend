@@ -1,0 +1,36 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index e141ee11f126866eb9b9081860301abf37c76d5d..3956c40fe79fe129de360c80d630954503b42f86 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1056,12 +1056,19 @@ namespace MebCbsAnka.Controllers
+ 
+             if (response != null)
+             {
+-                var binaNo = response.SorguSonucu[0].BinaNo.ToString();
+-                return binaNo;
++                if (response.SorguSonucu == null)
++                {
++                    return "";
++                }
++                else
++                {
++                    var binaNo = response.SorguSonucu[0].BinaNo.ToString();
++                    return binaNo;
++                }
+             }
+             else
+             {
+-                return "";
++                return null;
+             }
+         }
+ 
+@@ -1114,7 +1121,7 @@ namespace MebCbsAnka.Controllers
+ 
+                         if (hataBilgisi == null)
+                         {
+-                            long? adresNo = bina.AdresNo != null ? bina.AdresNo: 0;
++                            long? adresNo = bina.AdresNo != null ? bina.AdresNo : 0;
+                             long? binaKodu = bina.BinaKodu != null ? bina.BinaKodu : 0;
+                             int? binaNo = bina.BinaNo != null ? bina.BinaNo : 0;
+                             string icKapiNo = bina.IcKapiNo != null ? bina.IcKapiNo : "";
