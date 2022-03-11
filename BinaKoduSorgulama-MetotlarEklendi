@@ -1,0 +1,317 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index f407d487fc8bc4477a0b5ba2a881d5064b14aa8e..77c5bfa6def64a10d3e1cb0e869a6d17ef24f18f 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1,5 +1,6 @@
+ ﻿using System;
+ using System.Collections.Generic;
++using System.Globalization;
+ using System.IdentityModel.Tokens.Jwt;
+ using System.Linq;
+ using System.Net.Http;
+@@ -984,6 +985,270 @@ namespace MebCbsAnka.Controllers
+ 
+         }
+ 
++        [HttpGet("GetMaksIleBagliIlceListele")]
++        public async Task<MaksGeriDonusDegerleri> GetMaksIleBagliIlceListele(int ilKodu)
++        {
++            MaksGeriDonusDegerleri maksResult = new MaksGeriDonusDegerleri();
++
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuTumIleBagliIlceSorguKriter();
++            kriter.IlKodu = ilKodu;
++
++            var client = new ServiceMernis.AksOkuTumIleBagliIlceServisClient();
++            ServiceMernis.IlceSonucu response = await client.IleBagliIlceListesiGetirAsync(kriter, giris, logClient);
++
++            if (response != null)
++            {
++                ServiceMernis.Ilce[] sorguSonucu = response.SorguSonucu;
++
++                if (sorguSonucu != null)
++                {
++                    maksResult.ilceler = sorguSonucu;
++                }
++                else
++                {
++                    maksResult.error.code = 1;
++                    maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " Sorgu Sonucu Null.";
++                }
++
++                return maksResult;
++            }
++            else
++            {
++                maksResult.error.code = 0;
++                maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " IleBagliIlceListesiGetirAsync Sonuç Vermedi.";
++                return maksResult;
++            }
++        }
++
++        [HttpGet("GetMaksIlceyeBagliMahalleListele")]
++        public async Task<MaksGeriDonusDegerleri> GetMaksIlceyeBagliMahalleListele(int ilceKodu)
++        {
++            MaksGeriDonusDegerleri maksResult = new MaksGeriDonusDegerleri();
++
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuTumIlceyeBagliMahalleSorguKriter();
++            kriter.IlceKodu = ilceKodu;
++
++            var client = new ServiceMernis.AksOkuTumIlceyeBagliMahalleServisClient();
++            ServiceMernis.MahalleSonucu response = await client.IlceyeBagliTumMahalleListeleAsync(kriter, giris, logClient);
++
++            if (response != null)
++            {
++                ServiceMernis.Mahalle[] sorguSonucu = response.SorguSonucu;
++
++                if (sorguSonucu != null)
++                {
++                    maksResult.mahalleler = sorguSonucu;
++                }
++                else
++                {
++                    maksResult.error.code = 1;
++                    maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " Sorgu Sonucu Null.";
++                }
++
++                return maksResult;
++            }
++            else
++            {
++                maksResult.error.code = 0;
++                maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " IlceyeBagliTumMahalleListeleAsync Sonuç Vermedi.";
++                return maksResult;
++            }
++        }
++
++        [HttpGet("GetMaksMahalleyeBagliCsbmListele")]
++        public async Task<MaksGeriDonusDegerleri> GetMaksMahalleyeBagliCsbmListele(int mahalleKodu)
++        {
++            MaksGeriDonusDegerleri maksResult = new MaksGeriDonusDegerleri();
++
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuTumMahalleyeBagliCsbmSorguKriter();
++            kriter.MahalleKodu = mahalleKodu;
++
++            var client = new ServiceMernis.AksOkuTumMahalleyeBagliCsbmServisClient();
++            ServiceMernis.CsbmSonucu response = await client.MahalleyeBagliTumCsbmListeleAsync(kriter, giris, logClient);
++
++            if (response != null)
++            {
++                ServiceMernis.Csbm[] sorguSonucu = response.SorguSonucu;
++
++                if (sorguSonucu != null)
++                {
++                    maksResult.csbmler = sorguSonucu;
++                }
++                else
++                {
++                    maksResult.error.code = 1;
++                    maksResult.error.description = maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " Sorgu Sonucu Null.";
++                }
++
++                return maksResult;
++            }
++            else
++            {
++                maksResult.error.code = 0;
++                maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " IlceyeBagliTumMahalleListeleAsync Sonuç Vermedi.";
++                return maksResult;
++            }
++        }
++
++        [HttpGet("GetMaksCsbmyeBagliBinaListele")]
++        public async Task<MaksGeriDonusDegerleri> GetMaksCsbmyeBagliBinaListele(int csbmKodu)
++        {
++            MaksGeriDonusDegerleri maksResult = new MaksGeriDonusDegerleri();
++
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuTumCsbmyeBagliBinaSorguKriter();
++            kriter.CsbmKodu = csbmKodu;
++
++            var client = new ServiceMernis.AksOkuTumCsbmyeBagliBinaServisClient();
++            ServiceMernis.BinaSonucu response = await client.CsbmyeBagliBinaListeleAsync(kriter, giris, logClient);
++
++            if (response != null)
++            {
++                ServiceMernis.Bina[] sorguSonucu = response.SorguSonucu;
++
++                if (sorguSonucu != null)
++                {
++                    maksResult.binalar = sorguSonucu;
++                }
++                else
++                {
++                    maksResult.error.code = 1;
++                    maksResult.error.description = maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " Sorgu Sonucu Null.";
++                }
++
++                return maksResult;
++            }
++            else
++            {
++                maksResult.error.code = 0;
++                maksResult.error.description = "HATA CODE: #" + maksResult.error.code + " IlceyeBagliTumMahalleListeleAsync Sonuç Vermedi.";
++                return maksResult;
++            }
++        }
++
++        public async Task<XmlDocument> GetMaksNumaratajGeometryReq(int kimlikNo)
++        {
++            var url = "http://mernis.meb.gov.tr/WFSService/wfs.asmx/Get?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=maks:Numarataj&username=mebcbs&password=9UFdAy7x&FILTER=%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%20xmlns:gml=%22http://www.opengis.net/gml%22%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3EkimlikNo%3C/PropertyName%3E%3CLiteral%3E" + kimlikNo + "%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E";
++
++            var httpClient = new HttpClient();
++
++            var response = await httpClient.GetAsync(url);
++
++            var content = await response.Content.ReadAsStringAsync();
++
++            XmlDocument doc = new XmlDocument();
++
++            doc.LoadXml(content);
++
++            return doc;
++        }
++
++        [HttpGet("GetMaksNumaratajGeometry")]
++        public async Task<List<List<double[]>>> GetMaksNumaratajGeometry(int kimlikNo)
++        {
++            var response = await GetMaksNumaratajGeometryReq(kimlikNo);
++            List<List<double[]>> geomForNoComma = null;
++            if (response != null)
++            {
++                if (response.LastChild.ChildNodes.Count == 0)
++                {
++                    return null;
++                }
++                var featureAttributes = response.LastChild.ChildNodes[0].FirstChild;
++                var maksGeom = featureAttributes["maks:geometri"] != null ? featureAttributes["maks:geometri"].InnerText : "";
++                geomForNoComma = createRingsForNoComma(maksGeom);
++
++                return geomForNoComma;
++            }
++
++            return geomForNoComma;
++        }
++
++        [HttpGet("createRingsForNoComma")]
++        public List<List<double[]>> createRingsForNoComma(string geom)
++        {
++            List<List<double[]>> ringList = new List<List<double[]>>();
++            geom = geom.Trim();
++            string[] rings = geom.Split(" ");
++            int incorrectRingCount = 0;
++            List<double[]> data = new List<double[]>();
++            for (var i = 0; i < rings.Length; i++)
++            {
++                int dotCount = 0;
++                dotCount = rings[i].ToCharArray().Count(dot => dot == '.');
++                if (dotCount > 1)
++                {
++                    incorrectRingCount++;
++                }
++            }
++            if (incorrectRingCount == 0) // yanlış ring yoksa buraya girebilir.
++            {
++                for (var i = 0; i < rings.Length; i += 2)
++                {
++                    data.Add(new double[] { Convert.ToDouble(rings[i], CultureInfo.InvariantCulture), Convert.ToDouble(rings[i + 1], CultureInfo.InvariantCulture) });
++                }
++
++                ringList.Add(data);
++            }
++
++            return ringList;
++        }
++
+         [HttpPost("exportExcelBufferAnalysis")]
+         [Authorize(Roles = "SuperAdmin, Admin, User")]
+         public async Task<IActionResult> exportExcelGeom([FromForm] IFormCollection collection)
+diff --git a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..a3be1952aec682ef69482a9d466dfddae2fb2fe5
+--- /dev/null
++++ b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+@@ -0,0 +1,29 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Threading.Tasks;
++
++namespace MebCbsAnka.Dtos
++{
++    public class MaksGeriDonusDegerleri
++    {
++        public ServiceMernis.Ilce[] ilceler { get; set; }
++        public ServiceMernis.Mahalle[] mahalleler { get; set; }
++        public ServiceMernis.Csbm[] csbmler { get; set; }
++        public ServiceMernis.Bina[] binalar { get; set; }
++        //public ServiceMernis.BagimsizBolum[] bagimsizBolumler { get; set; }
++        public maksGeometry geometry { get; set; }
++        public ErrorDescription error { get; set; }
++
++        public class ErrorDescription
++        {
++            public int code { get; set; }
++            public string description { get; set; }
++        }
++
++        public class maksGeometry
++        {
++            public List<List<double[]>> rings { get; set; }
++        }
++    }
++}
