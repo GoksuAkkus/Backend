@@ -1,0 +1,173 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index 3a81b9cfb13c6180e0cf8550d8135ae113d7899d..9b0b59f5be4139cc10ff51d1653a655e4b982862 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -8,6 +8,7 @@ using System.Security.Claims;
+ using System.Text;
+ using System.Text.RegularExpressions;
+ using System.Threading.Tasks;
++using System.Xml;
+ using MebCbsAnka.DataAccess.Abstruct;
+ using MebCbsAnka.Dtos;
+ using MebCbsAnka.Dtos.ArcgisDtos;
+@@ -210,9 +211,9 @@ namespace MebCbsAnka.Controllers
+                     var islemServiceData = JObject.Parse(islemContent);
+                     var islemFields = islemServiceData["fields"];
+ 
+-                    foreach(var islemField in islemFields)
++                    foreach (var islemField in islemFields)
+                     {
+-                        foreach(var field in fieldData)
++                        foreach (var field in fieldData)
+                         {
+                             if (("i_" + islemField.Value<string>("name")) == field.Value<string>("name"))
+                             {
+@@ -469,7 +470,7 @@ namespace MebCbsAnka.Controllers
+ 
+             int current_year = DateTime.Now.Year;
+ 
+-            for(int i = 0; i < count; i++)
++            for (int i = 0; i < count; i++)
+             {
+                 int resultOffset = i * 1000;
+ 
+@@ -617,7 +618,7 @@ namespace MebCbsAnka.Controllers
+                 int featureCount = 1;
+ 
+                 var kadastroParselQueryURI = mebCbsUrl + "FeatureServer/6/query";
+-                var malikTableUrL = mebCbsUrl +"FeatureServer/15/query";
++                var malikTableUrL = mebCbsUrl + "FeatureServer/15/query";
+ 
+                 string query = "il=" + ilID;
+                 int offsetMultiplier = 0;
+@@ -711,9 +712,10 @@ namespace MebCbsAnka.Controllers
+                                     }
+ 
+                                     break;
+-                                } else if (column == "hisse")
++                                }
++                                else if (column == "hisse")
+                                 {
+-                                    for (int m = 0; m < featureAttributes.Count(); m ++)
++                                    for (int m = 0; m < featureAttributes.Count(); m++)
+                                     {
+                                         var attribute2 = featureAttributes[m];
+                                         JProperty jProperty2 = attribute2.ToObject<JProperty>();
+@@ -725,7 +727,8 @@ namespace MebCbsAnka.Controllers
+                                             if (value == "1")
+                                             {
+                                                 worksheet.Cells[cellRow, cellColumn].Value = "1";
+-                                            } else if (value == "2")
++                                            }
++                                            else if (value == "2")
+                                             {
+                                                 var formUrlEncodedContent2 = new FormUrlEncodedContent(new[]
+                                                 {
+@@ -746,23 +749,25 @@ namespace MebCbsAnka.Controllers
+                                                     var malikFeatureAtt = malikFeature["attributes"].ToArray();
+ 
+                                                     maliyeHazinesiPay = malikFeatureAtt[0].ToObject<JProperty>().First.ToString();
+-                                                } else
++                                                }
++                                                else
+                                                 {
+                                                     maliyeHazinesiPay = "0";
+                                                 }
+-                                                
++
+                                                 worksheet.Cells[cellRow, cellColumn].Value = maliyeHazinesiPay;
+-                                            } else
++                                            }
++                                            else
+                                             {
+                                                 worksheet.Cells[cellRow, cellColumn].Value = "";
+                                             }
+                                             break;
+                                         }
+                                     }
+-                                        break;
+-                                    }
++                                    break;
+                                 }
+                             }
++                        }
+                     }
+ 
+                     offsetMultiplier++;
+@@ -1117,5 +1122,63 @@ namespace MebCbsAnka.Controllers
+ 
+             return Ok();
+         }
++
++        [Produces("application/xml")]
++        [HttpGet("proxy")]
++        [Authorize(Roles = "SuperAdmin, Admin, User")]
++        public async Task<IActionResult> transparentProxy()
++        {
++            var query = HttpContext.Request.Query;
++            var urlData = "";
++            var index = 0;
++            foreach (var item in query)
++            {
++                if (index == 0)
++                {
++                    urlData += item.Key + '?';
++                    index++;
++                }
++
++                else
++                {
++                    urlData += item.Key + '=' + item.Value + '&';
++                }
++            }
++            urlData = urlData.Remove(urlData.Length - 1);
++            var client = new HttpClient();
++​
++            if (urlData.Contains("GetCapabilities"))
++            {
++                var response = await client.GetAsync(urlData);
++                var content = await response.Content.ReadAsStringAsync();
++                 
++                XmlDocument xmlDoc = new XmlDocument();
++                xmlDoc.LoadXml(content);
++                return Ok(xmlDoc);
++            }
++            else
++            {
++                var response = await client.GetAsync(urlData);
++                var content = await response.Content.ReadAsByteArrayAsync();
++​
++                return File(content, "image/png");
++            }
++​
++        }
++
++        [Produces("application/xml")]
++        [HttpGet("tucbs")]
++        [Authorize(Roles = "SuperAdmin, Admin, User")]
++        public async Task<IActionResult> getTUCBSLayers()
++        {
++            var url = "https://gis-prod-api.csb.gov.tr/cografiveriservishavuzu_intranet";
++            var client = new HttpClient();
++​
++            var response = await client.GetAsync(url);
++            var content = await response.Content.ReadAsStringAsync();
++            XmlDocument xmlDoc = new XmlDocument();
++            xmlDoc.LoadXml(content);
++            return Ok(xmlDoc);
++        }
+     }
+ }
+diff --git a/MebCbsAnka/Startup.cs b/MebCbsAnka/Startup.cs
+index b0211bbacf320dde828e8e3fa6e3466a00867b8b..7c2b25e69b017909b0c002284374791c02f68e5a 100644
+--- a/MebCbsAnka/Startup.cs
++++ b/MebCbsAnka/Startup.cs
+@@ -64,7 +64,7 @@ namespace MebCbsAnka
+                     });
+             });
+ 
+-            services.AddMvc();
++            services.AddMvc().AddXmlSerializerFormatters();
+             // Forwarded Header
+             services.Configure<ForwardedHeadersOptions>(options =>
+                 {
