@@ -1,0 +1,126 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index 43fee0355bc8bb549c3eb1edc004d3eb3118effb..cfa5d79f668a5b6a3a7b20b65b9dfbe19aa59097 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -328,6 +328,8 @@ namespace MebCbsAnka.Controllers
+                                     else
+                                     {
+                                         var type = field["type"].Value<string>();
++                                        var attributeVal = attribute.First.ToString();
++
+                                         if (type == "esriFieldTypeDate")
+                                         {
+                                             var dateString = attribute.First.ToString();
+@@ -341,6 +343,26 @@ namespace MebCbsAnka.Controllers
+                                                 worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
+                                             }
+                                         }
++                                        else if (attributeVal != "")
++                                        {
++                                            long intTryParseVal = 0;
++                                            var doubleTryParseVal = 0.0;
++                                            if (long.TryParse(attribute.First.ToString(), out intTryParseVal))
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = Convert.ToInt64(attribute.First);
++                                                Console.WriteLine(Convert.ToInt64(attribute.First));
++
++                                            }
++                                            else if (double.TryParse(attribute.First.ToString(), out doubleTryParseVal))
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = Convert.ToDouble(attribute.First);
++                                            }
++                                            else
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
++                                            }
++
++                                        }
+                                         else
+                                         {
+                                             worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
+@@ -454,6 +476,8 @@ namespace MebCbsAnka.Controllers
+                                     else
+                                     {
+                                         var type = field.type;
++                                        var attributeVal = attribute.First.ToString();
++
+                                         if (type == "esriFieldTypeDate")
+                                         {
+                                             var dateString = attribute.First.ToString();
+@@ -467,6 +491,26 @@ namespace MebCbsAnka.Controllers
+                                                 worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
+                                             }
+                                         }
++                                        else if (attributeVal != "")
++                                        {
++                                            long intTryParseVal = 0;
++                                            var doubleTryParseVal = 0.0;
++                                            if (long.TryParse(attribute.First.ToString(), out intTryParseVal))
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = Convert.ToInt64(attribute.First);
++                                                Console.WriteLine(Convert.ToInt64(attribute.First));
++
++                                            }
++                                            else if (double.TryParse(attribute.First.ToString(), out doubleTryParseVal))
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = Convert.ToDouble(attribute.First);
++                                            }
++                                            else
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
++                                            }
++
++                                        }
+                                         else
+                                         {
+                                             worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
+@@ -1333,7 +1377,7 @@ namespace MebCbsAnka.Controllers
+             for (int i = 0; i < binaList.Count; i++)
+             {
+                 string binaKodu = await GetMernisBinaKoduFromKimlikNo(binaList[i].kimlikNo);
+-                if(binaKodu != null)
++                if (binaKodu != null)
+                 {
+                     binaList[i].binaKodu = binaKodu;
+                 }
+@@ -1555,6 +1599,8 @@ namespace MebCbsAnka.Controllers
+                                     else
+                                     {
+                                         var type = field["type"].Value<string>();
++                                        var attributeVal = attribute.First.ToString();
++
+                                         if (type == "esriFieldTypeDate")
+                                         {
+                                             var dateString = attribute.First.ToString();
+@@ -1569,7 +1615,30 @@ namespace MebCbsAnka.Controllers
+                                             }
+                                             break;
+                                         }
+-                                        worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
++                                        else if (attributeVal != "")
++                                        {
++                                            long intTryParseVal = 0;
++                                            var doubleTryParseVal = 0.0;
++                                            if (long.TryParse(attribute.First.ToString(), out intTryParseVal))
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = Convert.ToInt64(attribute.First);
++                                                Console.WriteLine(Convert.ToInt64(attribute.First));
++
++                                            }
++                                            else if (double.TryParse(attribute.First.ToString(), out doubleTryParseVal))
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = Convert.ToDouble(attribute.First);
++                                            }
++                                            else
++                                            {
++                                                worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
++                                            }
++
++                                        }
++                                        else
++                                        {
++                                            worksheet.Cells[cellRow, cellColumn].Value = attribute.First.ToString();
++                                        }
+                                     }
+                                     break;
+                                 }
