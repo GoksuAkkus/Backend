@@ -1,0 +1,200 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index 2eaa818994cb955bfc0a9434e3e2ea8df35464dc..ee13a5cd2df239587e728b3aa15dcbb69e4238d2 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1304,6 +1304,85 @@ namespace MebCbsAnka.Controllers
+             }
+         }
+ 
++        [HttpGet("BucagaBagliBelde")]
++        public async Task<ServiceMernis.BeldeSonucu> BucagaBagliBelde(int bucakKodu)
++        {
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuTumBucagaBagliBeldeSorguKriter();
++            kriter.BucakKodu = bucakKodu;
++
++            var client = new ServiceMernis.AksOkuTumBucagaBagliBeldeServisClient();
++            ServiceMernis.BeldeSonucu response = await client.BucagaBagliBeldeListeleAsync(kriter, giris, logClient);
++
++            return response;
++        }
++
++        [HttpGet("BucagaBagliKoy")]
++        public async Task<ServiceMernis.KoySonucu1> BucagaBagliKoy(int bucakKodu)
++        {
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuTumBucagaBagliKoySorguKriter();
++            kriter.BucakKodu = bucakKodu;
++
++            var client = new ServiceMernis.AksOkuTumBucagaBagliKoyServisClient();
++            ServiceMernis.KoySonucu1 response = await client.BucagaBagliKoyListeleAsync(kriter, giris, logClient);
++
++            return response;
++        }
++
++        [HttpGet("KoyeBagliMahalle")]
++        public async Task<ServiceMernis.MahalleSonucu> KoyeBagliMahalle(long? koyKodu)
++        {
++            var giris = new ServiceMernis.KullaniciGiris();
++            giris.UserName = "mebcbs";
++            giris.Password = "9UFdAy7x";
++
++            var logClient = new ServiceMernis.LogClient();
++            logClient.EkranKodu = "1";
++            logClient.Aciklama = "MebCbsAnka";
++            logClient.ModulKodu = "1";
++
++            logClient.YetkiliIPAdresi = "10.30.1.244";
++            logClient.YetkiliKullaniciAdi = "1234567910";
++            logClient.YetkiliKullaniciNo = 1234567910;
++            logClient.YetkiliTCKimlikNo = 44257273824;
++
++            var kriter = new ServiceMernis.AksOkuTumKoyeBagliMahalleSorguKriter();
++            kriter.KoyKodu = int.Parse(koyKodu.ToString());
++
++            var client = new ServiceMernis.AksOkuTumKoyeBagliMahalleServisClient();
++            ServiceMernis.MahalleSonucu response = await client.KoyeBagliMahalleListeleAsync(kriter, giris, logClient);
++
++            return response;
++
++        }
++
+         [HttpGet("GetSetMaksIlceyeBagliBucakKoyMahalleListele")]
+         public async Task<MaksGeriDonusDegerleri> GetSetMaksIlceyeBagliBucakKoyMahalleListele(int ilceKodu, MaksGeriDonusDegerleri maksResult)
+         {
+@@ -1338,6 +1417,63 @@ namespace MebCbsAnka.Controllers
+                         for (var i = 0; i < bagliBucakListesi.Length; i++)
+                         {
+                             maksResult.bucaklar = bagliBucakListesi;
++
++                            var stringBucakKodu = bagliBucakListesi[i].Kod.ToString();
++                            var beldeResponse = await BucagaBagliBelde(int.Parse(stringBucakKodu));
++                            List<Belde> beldeKoyListesi = new List<Belde>();
++                            List<ServiceMernis.Mahalle> beldeMahalleleriListesi = new List<ServiceMernis.Mahalle>();
++
++                            if (beldeResponse.HataBilgisi == null)
++                            {
++                                for (var j = 0; j < beldeResponse.SorguSonucu.Length; j++)
++                                {
++                                    var koyKodu = beldeResponse.SorguSonucu[j].KoyKodu;
++                                    var bucakKodu = beldeResponse.SorguSonucu[j].BucakKod;
++                                    var belediyeTur = beldeResponse.SorguSonucu[j].BelediyeTur.Aciklama;
++                                    var belediyeAdi = beldeResponse.SorguSonucu[j].BelediyeAdi;
++                                    var belediyeKayitNo = beldeResponse.SorguSonucu[j].BelediyeKayitNo;
++                                    var isMerkezKoy = beldeResponse.SorguSonucu[j].IsMerkezKoy;
++                                    var koyAdi = beldeResponse.SorguSonucu[j].KoyAdi;
++
++                                    if (koyKodu != null)
++                                    {
++                                        var beldeObject = new Belde()
++                                        {
++                                            belediyeAdi = belediyeAdi,
++                                            belediyeKayitNo = belediyeKayitNo,
++                                            belediyeTur = belediyeTur,
++                                            bucakKodu = bucakKodu,
++                                            isMerkezKoy = isMerkezKoy,
++                                            koyAdi = koyAdi,
++                                            koyKodu = koyKodu
++                                        };
++
++                                        beldeKoyListesi.Add(beldeObject);
++                                    }
++
++                                    if (koyKodu != null)
++                                    {
++                                        ServiceMernis.MahalleSonucu mahalleSonucu = new ServiceMernis.MahalleSonucu();
++                                        ServiceMernis.Mahalle mahalle = new ServiceMernis.Mahalle();
++                                        mahalleSonucu = await KoyeBagliMahalle(koyKodu);
++
++                                        if(mahalleSonucu.HataBilgisi == null)
++                                        {
++                                            var mahalleSorguSonucu = mahalleSonucu.SorguSonucu;
++                                            for(var m=0; m< mahalleSorguSonucu.Length; m++)
++                                            {
++                                                beldeMahalleleriListesi.Add(mahalleSorguSonucu[m]);
++                                            }
++                                            
++                                        }
++                                        
++                                    } 
++                                }
++                                maksResult.beldeMahalleleri = beldeMahalleleriListesi;
++                                maksResult.beldeler = beldeKoyListesi;
++
++                            }
++
+                             ServiceMernis.BagliKoyBilgisi[] bagliKoyListesi = bagliBucakListesi[i].BagliKoyListesi;
+                             if (bagliKoyListesi.Length != 0)
+                             {
+diff --git a/MebCbsAnka/Dtos/Belde.cs b/MebCbsAnka/Dtos/Belde.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..bf0597f37052b6d470c674507a0eb5c72c4c0e77
+--- /dev/null
++++ b/MebCbsAnka/Dtos/Belde.cs
+@@ -0,0 +1,27 @@
++﻿using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Threading.Tasks;
++
++namespace MebCbsAnka.Dtos
++{
++    public class Belde
++    {
++        public int? bucakKodu { get; set; }
++        public long? koyKodu { get; set; }
++        public string belediyeTur { get; set; }
++        public string belediyeAdi { get; set; }
++        public int? belediyeKayitNo { get; set; }
++        public bool? isMerkezKoy { get; set; }
++        public string koyAdi { get; set; }
++
++        public class Mahalle
++        {
++            public int yetkiliIdareKodu { get; set; }
++            public long? koyKodu { get; set; }
++            public long mahalleKodu { get; set; }
++            public string ad { get; set; }
++        }
++
++    }
++}
+diff --git a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+index 03d52971c2c2a753fa844a2a98ffb2fc3b6d01e3..637b376f6ca4f8d2df89485627ce8766e4472311 100644
+--- a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
++++ b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+@@ -12,6 +12,8 @@ namespace MebCbsAnka.Dtos
+         public ServiceMernis.Csbm[] csbmler { get; set; }
+         public ServiceMernis.Bina[] binalar { get; set; }
+         public ServiceMernis.BagliBucakBilgisi[] bucaklar { get; set; }
++        public List<Belde> beldeler { get; set; }
++        public List<ServiceMernis.Mahalle> beldeMahalleleri { get; set; }
+         public maksGeometry geometry { get; set; }
+         public ErrorDescription error { get; set; }
+         public string acikAdresWithAdresNo { get; set; }
