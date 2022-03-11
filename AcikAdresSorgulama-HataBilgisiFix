@@ -1,0 +1,13 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index 3956c40fe79fe129de360c80d630954503b42f86..c1bde371a8fe426a52f28958cdce9a50099f20bb 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1137,6 +1137,8 @@ namespace MebCbsAnka.Controllers
+                         else
+                         {
+                             bagimsizBolumBina.hataBilgisi = hataBilgisi.Aciklama;
++                            binaArray.Add(bagimsizBolumBina);
++                            maksResult.error.maksDescription = hataBilgisi.Aciklama;
+                         }
+                     }
+                     maksResult.acikAdresWithBinaKoduArray = binaArray;
