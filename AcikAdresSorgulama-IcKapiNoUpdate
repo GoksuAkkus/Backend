@@ -1,0 +1,46 @@
+diff --git a/MebCbsAnka/Controllers/CbsController.cs b/MebCbsAnka/Controllers/CbsController.cs
+index de8715fb275dbd8210994166610fb4ed401d8c5f..e141ee11f126866eb9b9081860301abf37c76d5d 100644
+--- a/MebCbsAnka/Controllers/CbsController.cs
++++ b/MebCbsAnka/Controllers/CbsController.cs
+@@ -1108,6 +1108,8 @@ namespace MebCbsAnka.Controllers
+                     {
+                         var bina = response.SorguSonucu[i];
+                         var bagimsizBolumBina = new MaksGeriDonusDegerleri.BagimsizBolumBina();
++                        MaksGeriDonusDegerleri.IcKapiNo bagimsizBolumBinaIcKapiNo = new MaksGeriDonusDegerleri.IcKapiNo();
++                        bagimsizBolumBina.icKapiNo = bagimsizBolumBinaIcKapiNo;
+                         var hataBilgisi = response.SorguSonucu[i].HataBilgisi;
+ 
+                         if (hataBilgisi == null)
+@@ -1120,7 +1122,7 @@ namespace MebCbsAnka.Controllers
+                             bagimsizBolumBina.adresNo = adresNo;
+                             bagimsizBolumBina.binaKodu = binaKodu;
+                             bagimsizBolumBina.binaNo = binaNo;
+-                            bagimsizBolumBina.icKapiNo = icKapiNo;
++                            bagimsizBolumBina.icKapiNo.fullPart = icKapiNo;
+                             bagimsizBolumBina.hataBilgisi = "";
+                             binaArray.Add(bagimsizBolumBina);
+ 
+diff --git a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+index 5cd5d5be074bac239957d0ec6a6690c079fedb5f..03d52971c2c2a753fa844a2a98ffb2fc3b6d01e3 100644
+--- a/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
++++ b/MebCbsAnka/Dtos/MaksGeriDonusDegerleri.cs
+@@ -17,12 +17,18 @@ namespace MebCbsAnka.Dtos
+         public string acikAdresWithAdresNo { get; set; }
+         public List<BagimsizBolumBina> acikAdresWithBinaKoduArray { get; set; }
+ 
++        public class IcKapiNo
++        {
++            public string fullPart { get; set; }
++            public int numberPart { get; set; }
++            public string charPart { get; set; }
++        } 
+         public class BagimsizBolumBina
+         {
+             public long? adresNo{ get; set; }
+             public long? binaKodu{ get; set; }
+             public int? binaNo { get; set; }
+-            public string icKapiNo { get; set; }
++            public IcKapiNo icKapiNo { get; set; }
+             public string hataBilgisi { get; set; }
+         }
+ 
